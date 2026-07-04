@@ -4,7 +4,7 @@
 
 ---
 
-## Proxmox Host (192.168.1.108)
+## Proxmox Host (<proxmox-ip>)
 
 | Port | Service | Access |
 |---|---|---|
@@ -14,7 +14,7 @@
 
 ---
 
-## CT 101 — docker-services (192.168.1.109)
+## CT 101 — docker-services (<ct101-ip>)
 
 | Port | Service | Notes |
 |---|---|---|
@@ -30,7 +30,7 @@ All CT101 ports are internal — access via NPM reverse proxy only. Never port-f
 
 ---
 
-## CT 102 — nginx-proxy (192.168.1.111)
+## CT 102 — nginx-proxy (<ct102-ip>)
 
 | Port | Service | Notes |
 |---|---|---|
@@ -40,7 +40,7 @@ All CT101 ports are internal — access via NPM reverse proxy only. Never port-f
 
 ---
 
-## CT 104 — home-assistant (192.168.1.112)
+## CT 104 — home-assistant (<ct104-ip>)
 
 | Port | Service | Notes |
 |---|---|---|

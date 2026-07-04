@@ -9,10 +9,10 @@ Sovereign self-hosted infrastructure running on a single Proxmox VE 9.2.2 node w
 | Component | Details |
 |---|---|
 | Host | Dell Precision T1700 |
-| IP | 192.168.1.108 (LAN) |
-| Tailscale | 100.x.x.x |
+| IP | `<proxmox-lan-ip>` (static LAN, set in router) |
+| Remote access | Tailscale VPN (no IP published) |
 | Storage | ~220 GB LVM-thin pool |
-| Quorum | Raspberry Pi (QNetd) |
+| Quorum | Raspberry Pi (QNetd via Tailscale) |
 
 ---
 
@@ -21,20 +21,20 @@ Sovereign self-hosted infrastructure running on a single Proxmox VE 9.2.2 node w
 ```
 Internet
    │
-Router (192.168.1.1)
+Router
    │
-Proxmox T1700 (192.168.1.108)
-   ├── CT 101 · docker-services  (192.168.1.109)
-   ├── CT 102 · nginx-proxy      (192.168.1.111)  ← ports 80/443/81
-   ├── CT 104 · home-assistant   (192.168.1.110)  ← port 8123
-   └── VM 200 · opnsense         (install pending)
+Proxmox T1700
+   ├── CT 101 · docker-services   ← media stack
+   ├── CT 102 · nginx-proxy       ← ports 80/443 (public), 81 (localhost only)
+   ├── CT 104 · home-assistant    ← port 8123 (LAN/Tailscale only)
+   └── VM 200 · opnsense          ← firewall
 ```
 
 ---
 
 ## Containers & VMs
 
-### CT 101 — docker-services (192.168.1.109)
+### CT 101 — docker-services
 
 Docker host running all media and document services.
 
@@ -55,7 +55,7 @@ Restart all services:
 pct exec 101 -- bash -c 'cd /opt/media-stack && docker-compose restart'
 ```
 
-### CT 102 — nginx-proxy (192.168.1.111)
+### CT 102 — nginx-proxy
 
 Nginx Proxy Manager for reverse proxy and SSL termination.
 
@@ -63,24 +63,26 @@ Nginx Proxy Manager for reverse proxy and SSL termination.
 |---|---|
 | 80 | HTTP |
 | 443 | HTTPS |
-| 81 | NPM Admin UI |
+| 81 | NPM Admin UI — **localhost only, never expose** |
 
-**Admin UI:** `http://192.168.1.111:81`  
-Default login: `admin@example.com` / `changeme` (change on first login)
+Access the NPM admin UI via SSH tunnel:
+```bash
+ssh -L 8081:127.0.0.1:81 user@<ct102-ip>
+# then open http://localhost:8081
+```
 
 **Stack location:** `/opt/npm/docker-compose.yml`
 
-### CT 104 — home-assistant (192.168.1.110)
+### CT 104 — home-assistant
 
 Home Assistant Core installed via Python venv.
 
 | Port | Purpose |
 |---|---|
-| 8123 | HA Web UI |
+| 8123 | HA Web UI (LAN / Tailscale only) |
 
 **Install path:** `/srv/homeassistant`  
-**Config path:** `/home/homeassistant/.homeassistant`  
-**Run as:** `homeassistant` user
+**Config path:** `/home/homeassistant/.homeassistant`
 
 Start/stop:
 ```bash
@@ -90,16 +92,13 @@ pct exec 104 -- bash -c 'systemctl stop home-assistant@homeassistant'
 
 ### VM 200 — OPNsense
 
-OPNsense 25.1 firewall VM (install from ISO).
+OPNsense 25.1 firewall VM.
 
 | Resource | Value |
 |---|---|
 | RAM | 2 GB |
 | Cores | 2 |
 | Disk | 20 GB |
-| ISO | OPNsense-25.1.iso |
-
-Start installer from Proxmox web UI → VM 200 → Start.
 
 ---
 
@@ -107,7 +106,7 @@ Start installer from Proxmox web UI → VM 200 → Start.
 
 ### Tailscale
 
-Installed on Proxmox host and accessible via Tailscale IP.
+Installed on Proxmox host. All remote management goes through Tailscale — no ports forwarded to internet.
 
 ```bash
 tailscale status
@@ -116,7 +115,7 @@ tailscale ip
 
 ### QDevice (Quorum)
 
-Corosync QDevice running on Raspberry Pi (100.80.155.45) for single-node quorum.
+Corosync QDevice running on Raspberry Pi for single-node quorum tiebreaker.
 
 ```bash
 pvecm status          # check quorum status
@@ -126,15 +125,6 @@ pvecm qdevice status  # check QDevice
 ---
 
 ## Maintenance
-
-### Daily Cron — Wazuh tmp cleanup (Dell node)
-
-File: `/etc/cron.daily/wazuh-tmp-cleanup`
-```bash
-#!/bin/bash
-docker exec wazuh-manager bash -c \
-  'find /var/ossec/queue/vd_updater/tmp/contents/ -type f -mtime +1 -delete' 2>/dev/null
-```
 
 ### Update all CT 101 containers
 
@@ -152,10 +142,10 @@ pct exec 102 -- bash -c 'cd /opt/npm && docker-compose pull && docker-compose up
 
 ## Pending / Future
 
-- [ ] OPNsense VM 200 — complete installer via console
+- [ ] OPNsense — finish install and configure WAN/LAN
 - [ ] Configure NPM reverse proxy rules for each service
-- [ ] Add NAS node for Syncthing backup when hardware available
-- [ ] Enable Proxmox HA when second compute node added
+- [ ] NAS node for Syncthing backup when hardware available
+- [ ] Proxmox HA when second compute node added
 - [ ] Immich external library mount (NAS)
 - [ ] SSL certificates via Let's Encrypt in NPM
 
@@ -163,15 +153,25 @@ pct exec 102 -- bash -c 'cd /opt/npm && docker-compose pull && docker-compose up
 
 ## Port Reference
 
-| IP | Port | Service |
+| Port | Service | Accessible from |
 |---|---|---|
-| 192.168.1.109 | 8096 | Jellyfin |
-| 192.168.1.109 | 32400 | Plex |
-| 192.168.1.109 | 4533 | Navidrome |
-| 192.168.1.109 | 5000 | Kavita |
-| 192.168.1.109 | 13378 | Audiobookshelf |
-| 192.168.1.109 | 2283 | Immich |
-| 192.168.1.109 | 1234 | Papra |
-| 192.168.1.110 | 8123 | Home Assistant |
-| 192.168.1.111 | 81 | NPM Admin |
-| 192.168.1.111 | 80/443 | Reverse Proxy |
+| 8096 | Jellyfin | LAN via NPM |
+| 32400 | Plex | LAN via NPM |
+| 4533 | Navidrome | LAN via NPM |
+| 5000 | Kavita | LAN via NPM |
+| 13378 | Audiobookshelf | LAN via NPM |
+| 2283 | Immich | LAN via NPM |
+| 1234 | Papra | LAN via NPM |
+| 8123 | Home Assistant | LAN / Tailscale |
+| 80/443 | NPM reverse proxy | LAN (+ internet if DNS configured) |
+| 8006 | Proxmox Web UI | LAN / Tailscale only |
+| 22 | SSH | Tailscale only |
+
+---
+
+## Security Model
+
+- All remote access via Tailscale — zero ports forwarded to internet
+- NPM admin (port 81) bound to localhost only — SSH tunnel required
+- Proxmox firewall enabled: SSH and web UI restricted to LAN + Tailscale
+- rpcbind disabled (was port 111)

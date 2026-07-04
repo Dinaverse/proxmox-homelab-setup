@@ -132,7 +132,7 @@ ha-manager add ct:101 --state started --max_restart 3 --max_relocate 3
 ## Network Layout
 
 ```
-192.168.1.108  →  Proxmox Web UI (port 8006)
+<proxmox-ip>  →  Proxmox Web UI (port 8006)
 192.168.1.x    →  Jellyfin      (port 8096)
 192.168.1.x    →  Navidrome     (port 4533)
 192.168.1.x    →  Audiobookshelf (port 13378)

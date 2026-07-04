@@ -167,7 +167,7 @@ pvecm qdevice setup <raspberry-pi-ip>
 ## Architecture Summary
 
 ```
-192.168.1.108   →  Proxmox Node 1 (T1700)    port 8006
+<proxmox-node1-ip>   →  Proxmox Node 1 (T1700)    port 8006
 192.168.1.x     →  Proxmox Node 2 (NAS)      port 8006
 192.168.1.50    →  QDevice (Raspberry Pi)     corosync-qnetd
 ```
