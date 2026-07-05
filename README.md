@@ -25,8 +25,8 @@ Router
    │
 Proxmox T1700
    ├── CT 101 · docker-services   ← media stack
-   ├── CT 102 · nginx-proxy       ← ports 80/443 (public), 81 (localhost only)
-   ├── CT 104 · home-assistant    ← port 8123 (LAN/Tailscale only)
+   ├── CT 102 · nginx-proxy       ← ports 8x/44x (public), 8x (localhost only)
+   ├── CT 104 · home-assistant    ← port 812x (LAN/Tailscale only)
    └── VM 200 · opnsense          ← firewall
 ```
 
@@ -40,13 +40,13 @@ Docker host running all media and document services.
 
 | Service | Port | Purpose |
 |---|---|---|
-| Jellyfin | 8096 | Video streaming |
-| Plex | 32400 | Video streaming (alt) |
-| Navidrome | 4533 | Music streaming |
-| Kavita | 5000 | Books / Comics / Manga |
-| Audiobookshelf | 13378 | Audiobooks & Podcasts |
-| Immich | 2283 | Photo management |
-| Papra | 1234 | Document management |
+| Jellyfin | 809x | Video streaming |
+| Plex | 3240x | Video streaming (alt) |
+| Navidrome | 453x | Music streaming |
+| Kavita | 500x | Books / Comics / Manga |
+| Audiobookshelf | 1337x | Audiobooks & Podcasts |
+| Immich | 228x | Photo management |
+| Papra | 123x | Document management |
 
 **Stack location:** `/opt/media-stack/docker-compose.yml`
 
@@ -61,14 +61,14 @@ Nginx Proxy Manager for reverse proxy and SSL termination.
 
 | Port | Purpose |
 |---|---|
-| 80 | HTTP |
-| 443 | HTTPS |
-| 81 | NPM Admin UI — **localhost only, never expose** |
+| 8x | HTTP |
+| 44x | HTTPS |
+| 8x | NPM Admin UI — **localhost only, never expose** |
 
 Access the NPM admin UI via SSH tunnel:
 ```bash
-ssh -L 8081:127.0.0.1:81 user@<ct102-ip>
-# then open http://localhost:8081
+ssh -L 808x:127.0.0.1:8x user@<ct102-ip>
+# then open http://localhost:808x
 ```
 
 **Stack location:** `/opt/npm/docker-compose.yml`
@@ -79,7 +79,7 @@ Home Assistant Core installed via Python venv.
 
 | Port | Purpose |
 |---|---|
-| 8123 | HA Web UI (LAN / Tailscale only) |
+| 812x | HA Web UI (LAN / Tailscale only) |
 
 **Install path:** `/srv/homeassistant`  
 **Config path:** `/home/homeassistant/.homeassistant`
@@ -155,23 +155,23 @@ pct exec 102 -- bash -c 'cd /opt/npm && docker-compose pull && docker-compose up
 
 | Port | Service | Accessible from |
 |---|---|---|
-| 8096 | Jellyfin | LAN via NPM |
-| 32400 | Plex | LAN via NPM |
-| 4533 | Navidrome | LAN via NPM |
-| 5000 | Kavita | LAN via NPM |
-| 13378 | Audiobookshelf | LAN via NPM |
-| 2283 | Immich | LAN via NPM |
-| 1234 | Papra | LAN via NPM |
-| 8123 | Home Assistant | LAN / Tailscale |
-| 80/443 | NPM reverse proxy | LAN (+ internet if DNS configured) |
-| 8006 | Proxmox Web UI | LAN / Tailscale only |
-| 22 | SSH | Tailscale only |
+| 809x | Jellyfin | LAN via NPM |
+| 3240x | Plex | LAN via NPM |
+| 453x | Navidrome | LAN via NPM |
+| 500x | Kavita | LAN via NPM |
+| 1337x | Audiobookshelf | LAN via NPM |
+| 228x | Immich | LAN via NPM |
+| 123x | Papra | LAN via NPM |
+| 812x | Home Assistant | LAN / Tailscale |
+| 8x/44x | NPM reverse proxy | LAN (+ internet if DNS configured) |
+| 800x | Proxmox Web UI | LAN / Tailscale only |
+| 2x | SSH | Tailscale only |
 
 ---
 
 ## Security Model
 
 - All remote access via Tailscale — zero ports forwarded to internet
-- NPM admin (port 81) bound to localhost only — SSH tunnel required
+- NPM admin (port 8x) bound to localhost only — SSH tunnel required
 - Proxmox firewall enabled: SSH and web UI restricted to LAN + Tailscale
-- rpcbind disabled (was port 111)
+- rpcbind disabled (was port 11x)
