@@ -1,0 +1,16 @@
+[OPTIONS]
+
+nosmurfs: 1
+log_level_in: warning
+enable: 1
+
+[RULES]
+
+IN ACCEPT -p tcp -dport 443 -log nolog # Allow HTTPS to OPNsense Web UI
+IN DROP -p udp -dport 111 # Block rpcbind UDP
+IN DROP -p tcp -dport 111 # Block rpcbind
+IN ACCEPT -source <IP-REDACTED>/10 -p tcp -dport 8006 # Proxmox UI Tailscale
+IN ACCEPT -source <IP-REDACTED>/24 -p tcp -dport 8006 # Proxmox UI LAN
+IN ACCEPT -source <IP-REDACTED>/10 -p tcp -dport 22 # SSH Tailscale
+IN ACCEPT -source <IP-REDACTED>/24 -p tcp -dport 22 # SSH from LAN
+

@@ -1,0 +1,25 @@
+auto lo
+iface lo inet loopback
+
+iface nic0 inet manual
+
+auto vmbr0
+iface vmbr0 inet static
+	address <IP-REDACTED>/24
+	gateway <IP-REDACTED>
+	bridge-ports nic0
+	bridge-stp off
+	bridge-fd 0
+
+
+source /etc/network/interfaces.d/*
+
+# Wireless interface configuration
+
+auto vmbr1
+iface vmbr1 inet static
+	address <IP-REDACTED>/24
+	bridge-ports none
+	bridge-stp off
+	bridge-fd 0
+	comment OPNsense LAN internal bridge
